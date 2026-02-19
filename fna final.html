@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Needs Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .hidden-result { display: none; }
+        /* Professional styling for PDF */
+        #pdf-export-container { padding: 20px; background: white; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen py-10 px-5">
+
+    <div id="report-content" class="max-w-3xl mx-auto bg-white shadow-2xl rounded-xl overflow-hidden">
+        <div class="bg-[#065f46] p-8 text-white">
+            <h1 class="text-3xl font-black uppercase tracking-tight">Financial Needs Analysis</h1>
+            <p class="text-emerald-100 mt-1 opacity-90">Personalized Life Insurance Gap Report</p>
+        </div>
+
+        <div class="p-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 no-print">
+                <div class="space-y-1">
+                    <label class="block text-xs font-black text-gray-500 uppercase">Monthly Expenses (incl. EMI)</label>
+                    <input type="number" id="inputA" placeholder="160000" class="w-full p-3 bg-gray-50 border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-xs font-black text-gray-500 uppercase">Total Monthly EMI</label>
+                    <input type="number" id="inputB" placeholder="40000" class="w-full p-3 bg-gray-50 border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-xs font-black text-gray-500 uppercase">Expected FD Rate (%)</label>
+                    <input type="number" id="inputE" value="7" step="0.1" class="w-full p-3 bg-gray-50 border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-xs font-black text-gray-500 uppercase">Outstanding Loans</label>
+                    <input type="number" id="inputG" placeholder="2000000" class="w-full p-3 bg-gray-50 border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+                <div class="md:col-span-2 space-y-1">
+                    <label class="block text-xs font-black text-gray-500 uppercase">Existing Life Insurance Cover</label>
+                    <input type="number" id="inputI" placeholder="4000000" class="w-full p-3 bg-gray-50 border border-gray-300 rounded focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+                
+                <div class="md:col-span-2 flex gap-3 pt-2">
+                    <button onclick="generateData()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded shadow-lg transition-all uppercase tracking-widest">Calculate</button>
+                    <button onclick="window.location.reload()" class="px-6 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded transition-all">Reset</button>
+                </div>
+            </div>
+
+            <div id="results-section" class="hidden-result mt-8 pt-8 border-t-2 border-gray-100">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-black text-gray-800 uppercase tracking-tighter">Calculated Summary</h2>
+                    <span class="text-xs text-gray-400 font-medium" id="pdfDate"></span>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="flex justify-between border-b border-gray-50 pb-2">
+                        <span class="text-gray-600">Net Monthly Expense </span>
+                        <span id="resC" class="font-bold text-gray-900 text-right"></span>
+                    </div>
+                    <div class="flex justify-between border-b border-gray-50 pb-2">
+                        <span class="text-gray-600">Annual Expense to Protect </span>
+                        <span id="resD" class="font-bold text-gray-900 text-right"></span>
+                    </div>
+                    <div class="flex justify-between border-b border-gray-50 pb-2">
+                        <span class="text-gray-600">Fund required to generate annual expense </span>
+                        <span id="resF" class="font-bold text-gray-900 text-right"></span>
+                    </div>
+                    <div class="flex justify-between border-b-2 border-emerald-100 pb-2 pt-2">
+                        <span class="font-bold text-gray-800">Gross Total Cover Needed </span>
+                        <span id="resH" class="font-black text-emerald-700 text-right text-lg"></span>
+                    </div>
+                    <div class="flex justify-between border-b border-gray-50 pb-2">
+                        <span class="text-gray-600">Less: Existing Life Insurance </span>
+                        <span id="resI" class="font-bold text-red-600 text-right"></span>
+                    </div>
+                </div>
+
+                <div class="mt-10 bg-emerald-50 border-l-8 border-emerald-600 p-8 rounded-r-lg shadow-sm">
+                    <p class="text-emerald-700 font-black uppercase tracking-widest text-xs mb-1">Net Life Insurance Cover Required </p>
+                    <p id="resJ" class="text-4xl font-black text-emerald-900 tracking-tighter">LKR 0.00</p>
+                </div>
+
+                <button onclick="downloadPDF()" class="mt-8 w-full bg-slate-800 hover:bg-black text-white font-bold py-4 rounded-lg transition-all flex items-center justify-center gap-2 no-print shadow-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                    Download PDF Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const lkrFormatter = new Intl.NumberFormat('en-LK', {
+            style: 'currency',
+            currency: 'LKR',
+            minimumFractionDigits: 2
+        });
+
+        function generateData() {
+            const A = parseFloat(document.getElementById('inputA').value) || 0;
+            const B = parseFloat(document.getElementById('inputB').value) || 0;
+            const E = parseFloat(document.getElementById('inputE').value) || 7;
+            const G = parseFloat(document.getElementById('inputG').value) || 0;
+            const I = parseFloat(document.getElementById('inputI').value) || 0;
+
+            if (A <= 0) { alert("Please enter a valid monthly expense amount."); return; }
+
+            const C = A - B;
+            const D = C * 12;
+            const F = E > 0 ? D / (E / 100) : 0;
+            const H = F + G;
+            const J = Math.max(0, H - I);
+
+            // Mapping to Results
+            document.getElementById('resC').innerText = lkrFormatter.format(C);
+            document.getElementById('resD').innerText = lkrFormatter.format(D);
+            document.getElementById('resF').innerText = lkrFormatter.format(F);
+            document.getElementById('resH').innerText = lkrFormatter.format(H);
+            document.getElementById('resI').innerText = "- " + lkrFormatter.format(I);
+            document.getElementById('resJ').innerText = lkrFormatter.format(J);
+            document.getElementById('pdfDate').innerText = "Report Date: " + new Date().toLocaleDateString();
+
+            // Reveal results
+            document.getElementById('results-section').classList.remove('hidden-result');
+            document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function downloadPDF() {
+            const element = document.getElementById('report-content');
+            
+            // PDF Configuration specifically for top alignment
+            const opt = {
+                margin:       [0, 0, 0, 0], // Zero margins to prevent shifting
+                filename:     'Life_Insurance_Needs_Analysis.pdf',
+                image:        { type: 'jpeg', quality: 1 },
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true, 
+                    scrollY: 0, 
+                    windowWidth: document.documentElement.offsetWidth 
+                },
+                jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            
+            // This ensures we capture the element starting from the top
+            html2pdf().from(element).set(opt).toPdf().get('pdf').then(function (pdf) {
+                // Additional layout tweaks can be done here if needed
+            }).save();
+        }
+    </script>
+
+    <style>
+        /* This hides elements during PDF generation */
+        @media print {
+            .no-print { display: none !important; }
+        }
+        /* Custom scrollbar for better UI */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #065f46; border-radius: 10px; }
+    </style>
+</body>
+</html>
